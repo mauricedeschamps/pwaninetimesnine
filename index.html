@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a73e8">
+    <meta name="description" content="Multiplication Table Practice App">
+    <title>Multiplication Table</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/favicon.ico">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .logo {
+            font-size: 48px;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #1a73e8;
+        }
+        .language-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .language-btn {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+        }
+        .language-btn.active {
+            background: #1a73e8;
+            color: white;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+            flex-grow: 1;
+        }
+        .grid-btn {
+            aspect-ratio: 1;
+            font-size: 24px;
+            border: none;
+            border-radius: 15px;
+            background-color: white;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a73e8;
+        }
+        .grid-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .grid-btn:active {
+            transform: translateY(0);
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        .nav-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        .continue-btn {
+            background-color: #1a73e8;
+            color: white;
+        }
+        .screen {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .active {
+            display: flex;
+        }
+        .current-table {
+            font-size: 24px;
+            margin: 10px 0;
+            color: #1a73e8;
+        }
+        footer {
+            margin-top: auto;
+            padding: 20px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .email-link {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        .sound-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .table-number {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        #install-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- インストールボタン -->
+    <button id="install-btn">Install App</button>
+
+    <!-- 言語スイッチャー -->
+    <div class="language-switcher">
+        <button class="language-btn active" data-lang="en">English</button>
+        <button class="language-btn" data-lang="zh">中文</button>
+        <button class="language-btn" data-lang="ja">日本語</button>
+    </div>
+
+    <!-- 段選択画面 -->
+    <div class="screen active" id="menu-screen">
+        <div class="logo">9×9</div>
+        <div class="current-table" id="menu-title">Select a number (1-9)</div>
+        <div class="grid-container" id="table-grid">
+            <!-- 1-9の数字ボタンがここに生成されます -->
+        </div>
+    </div>
+
+    <!-- 問題選択画面 -->
+    <div class="screen" id="problem-screen">
+        <div class="logo">9×9</div>
+        <div class="current-table" id="current-table-display"></div>
+        <div class="grid-container" id="problem-grid">
+            <!-- 問題ボタンがここに生成されます -->
+        </div>
+        <div class="nav-buttons">
+            <button class="nav-btn" id="back-to-menu">← Back</button>
+            <div></div> <!-- Spacer -->
+        </div>
+    </div>
+
+    <!-- 答え表示画面 -->
+    <div class="screen" id="answer-screen">
+        <div class="logo">9×9</div>
+        <div class="current-table" id="answer-table-display"></div>
+        <div style="font-size: 48px; margin: 30px 0; color: #1a73e8;" id="question-display"></div>
+        <div style="font-size: 72px; color: #1a73e8; margin-bottom: 30px;" id="correct-answer"></div>
+        <div class="nav-buttons">
+            <button class="nav-btn" id="back-to-problem">← Back</button>
+            <button class="nav-btn continue-btn" id="continue-btn">Continue →</button>
+        </div>
+    </div>
+
+    <!-- 音声ボタン -->
+    <button class="sound-btn" id="sound-btn">🔊</button>
+
+    <footer>
+        <span id="contact-text">Contact us</span><br>
+        <a href="mailto:mementomorikatsu@gmail.com" class="email-link">mementomorikatsu@gmail.com</a>
+    </footer>
+
+    <script>
+        // マニフェストデータ (インラインで定義)
+        const manifest = {
+            "name": "9×9 Multiplication Table",
+            "short_name": "9×9",
+            "description": "Practice multiplication tables from 1 to 9",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#f5f5f5",
+            "theme_color": "#1a73e8",
+            "icons": [
+                {
+                    "src": "icons/icon-72x72.png",
+                    "sizes": "72x72",
+                    "type": "image/png"
+                },
+                {
+                    "src": "icons/icon-96x96.png",
+                    "sizes": "96x96",
+                    "type": "image/png"
+                },
+                {
+                    "src": "icons/icon-128x128.png",
+                    "sizes": "128x128",
+                    "type": "image/png"
+                },
+                {
+                    "src": "icons/icon-144x144.png",
+                    "sizes": "144x144",
+                    "type": "image/png"
+                },
+                {
+                    "src": "icons/icon-152x152.png",
+                    "sizes": "152x152",
+                    "type": "image/png"
+                },
+                {
+                    "src": "icons/icon-192x192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                },
+                {
+                    "src": "icons/icon-384x384.png",
+                    "sizes": "384x384",
+                    "type": "image/png"
+                },
+                {
+                    "src": "icons/icon-512x512.png",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        };
+
+        // マニフェストをBlobとして作成
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        document.querySelector('link[rel="manifest"]').href = manifestURL;
+
+        // サービスワーカーの登録
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful');
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        // インストールボタンの処理
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', () => {
+            installBtn.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+            });
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('App was installed');
+            installBtn.style.display = 'none';
+            deferredPrompt = null;
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 多言語対応テキスト
+            const translations = {
+                en: {
+                    menuTitle: "Select a number (1-9)",
+                    back: "Back",
+                    continue: "Continue",
+                    contact: "Contact us",
+                    tableTitle: "Times Table"
+                },
+                zh: {
+                    menuTitle: "选择数字 (1-9)",
+                    back: "返回",
+                    continue: "继续",
+                    contact: "联系我们",
+                    tableTitle: "的乘法表"
+                },
+                ja: {
+                    menuTitle: "数字を選んでください (1-9)",
+                    back: "戻る",
+                    continue: "続ける",
+                    contact: "お問い合わせ",
+                    tableTitle: "の段"
+                }
+            };
+
+            // 数字の多言語表現
+            const numberTexts = {
+                en: ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"],
+                zh: ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"],
+                ja: ["〇", "一", "二", "三", "四", "五", "六", "七", "八", "九"]
+            };
+
+            // 現在の言語 (デフォルトは英語)
+            let currentLang = 'en';
+            
+            // 現在の問題情報
+            let currentTable = 1;
+            let currentMultiplier = 1;
+            
+            // 音声合成設定
+            const synth = window.speechSynthesis;
+            let voices = [];
+            let voice = null;
+
+            // 音声の準備
+            function loadVoices() {
+                voices = synth.getVoices();
+                // 言語に合った音声を選択
+                if (currentLang === 'ja') {
+                    voice = voices.find(v => v.lang === 'ja-JP');
+                } else if (currentLang === 'zh') {
+                    voice = voices.find(v => v.lang === 'zh-CN' || v.lang === 'zh-TW');
+                } else {
+                    voice = voices.find(v => v.lang === 'en-US' || v.lang === 'en-GB');
+                }
+                
+                // 適切な音声が見つからない場合は最初の音声を使用
+                if (!voice && voices.length > 0) {
+                    voice = voices[0];
+                }
+            }
+
+            // 音声が利用可能になったらロード
+            if (synth.onvoiceschanged !== undefined) {
+                synth.onvoiceschanged = loadVoices;
+            }
+
+            // 初期ロード
+            loadVoices();
+
+            // テキストを音声で読み上げる
+            function speak(text) {
+                if (synth.speaking) {
+                    synth.cancel();
+                }
+
+                if (text && voice) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.voice = voice;
+                    utterance.rate = 0.9;
+                    
+                    // 言語ごとに発音を調整
+                    if (currentLang === 'en') {
+                        utterance.lang = 'en-US';
+                        utterance.text = text.replace(/×/g, ' times ').replace(/=/g, ' is ');
+                    } else if (currentLang === 'zh') {
+                        utterance.lang = 'zh-CN';
+                        utterance.text = text.replace(/×/g, ' 乘以 ').replace(/=/g, ' 等于 ');
+                    } else if (currentLang === 'ja') {
+                        utterance.lang = 'ja-JP';
+                        utterance.text = text.replace(/×/g, ' かける ').replace(/=/g, ' は ');
+                    }
+                    
+                    synth.speak(utterance);
+                }
+            }
+
+            // 要素取得
+            const menuScreen = document.getElementById('menu-screen');
+            const problemScreen = document.getElementById('problem-screen');
+            const answerScreen = document.getElementById('answer-screen');
+            const tableGrid = document.getElementById('table-grid');
+            const problemGrid = document.getElementById('problem-grid');
+            const currentTableDisplay = document.getElementById('current-table-display');
+            const answerTableDisplay = document.getElementById('answer-table-display');
+            const questionDisplay = document.getElementById('question-display');
+            const correctAnswer = document.getElementById('correct-answer');
+            const backToMenuBtn = document.getElementById('back-to-menu');
+            const backToProblemBtn = document.getElementById('back-to-problem');
+            const continueBtn = document.getElementById('continue-btn');
+            const menuTitle = document.getElementById('menu-title');
+            const contactText = document.getElementById('contact-text');
+            const soundBtn = document.getElementById('sound-btn');
+            const languageBtns = document.querySelectorAll('.language-btn');
+
+            // 言語切り替え
+            languageBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentLang = this.dataset.lang;
+                    
+                    // ボタンのactive状態を更新
+                    languageBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // UIテキストを更新
+                    updateUITexts();
+                    
+                    // 現在の画面に応じてコンテンツを再生成
+                    if (menuScreen.classList.contains('active')) {
+                        generateTableButtons();
+                    } else if (problemScreen.classList.contains('active')) {
+                        showProblemScreen(currentTable);
+                    } else if (answerScreen.classList.contains('active')) {
+                        showAnswerScreen(currentTable, currentMultiplier);
+                    }
+                });
+            });
+
+            // UIテキストを更新
+            function updateUITexts() {
+                menuTitle.textContent = translations[currentLang].menuTitle;
+                backToMenuBtn.textContent = translations[currentLang].back;
+                backToProblemBtn.textContent = translations[currentLang].back;
+                continueBtn.textContent = translations[currentLang].continue;
+                contactText.textContent = translations[currentLang].contact;
+            }
+
+            // 数字選択ボタン生成 (1-9)
+            function generateTableButtons() {
+                tableGrid.innerHTML = '';
+                
+                for (let i = 1; i <= 9; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'grid-btn';
+                    
+                    // 数字だけを大きく表示
+                    const numberSpan = document.createElement('span');
+                    numberSpan.className = 'table-number';
+                    numberSpan.textContent = i;
+                    
+                    btn.appendChild(numberSpan);
+                    btn.dataset.table = i;
+                    btn.addEventListener('click', function() {
+                        const table = parseInt(this.dataset.table);
+                        currentTable = table;
+                        showProblemScreen(table);
+                    });
+                    tableGrid.appendChild(btn);
+                }
+            }
+
+            // 問題選択画面を表示
+            function showProblemScreen(table) {
+                currentTableDisplay.textContent = `${table}${translations[currentLang].tableTitle}`;
+                problemGrid.innerHTML = '';
+                
+                // 問題ボタン生成 (×1から×9)
+                for (let i = 1; i <= 9; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'grid-btn';
+                    btn.textContent = `${table}×${i}`;
+                    btn.dataset.multiplier = i;
+                    btn.addEventListener('click', function() {
+                        const multiplier = parseInt(this.dataset.multiplier);
+                        currentMultiplier = multiplier;
+                        showAnswerScreen(table, multiplier);
+                    });
+                    problemGrid.appendChild(btn);
+                }
+                
+                menuScreen.classList.remove('active');
+                answerScreen.classList.remove('active');
+                problemScreen.classList.add('active');
+            }
+            
+            // 答え表示画面を表示
+            function showAnswerScreen(table, multiplier) {
+                answerTableDisplay.textContent = `${table}${translations[currentLang].tableTitle}`;
+                questionDisplay.textContent = `${table} × ${multiplier} = ?`;
+                correctAnswer.textContent = table * multiplier;
+                
+                // 音声で問題と答えを読み上げ
+                speak(`${table} × ${multiplier} = ${table * multiplier}`);
+                
+                problemScreen.classList.remove('active');
+                menuScreen.classList.remove('active');
+                answerScreen.classList.add('active');
+            }
+            
+            // 戻るボタンのイベント
+            backToMenuBtn.addEventListener('click', function() {
+                problemScreen.classList.remove('active');
+                answerScreen.classList.remove('active');
+                menuScreen.classList.add('active');
+            });
+            
+            backToProblemBtn.addEventListener('click', function() {
+                answerScreen.classList.remove('active');
+                problemScreen.classList.add('active');
+            });
+
+            // 続けるボタンのイベント
+            continueBtn.addEventListener('click', function() {
+                currentMultiplier = currentMultiplier < 9 ? currentMultiplier + 1 : 1;
+                showAnswerScreen(currentTable, currentMultiplier);
+            });
+
+            // 音声ボタンのイベント
+            soundBtn.addEventListener('click', function() {
+                if (answerScreen.classList.contains('active')) {
+                    speak(`${currentTable} × ${currentMultiplier} = ${currentTable * currentMultiplier}`);
+                }
+            });
+
+            // 初期化
+            generateTableButtons();
+            updateUITexts();
+        });
+    </script>
+
+    <script>
+        // インラインサービスワーカー
+        const serviceWorkerScript = `
+            const CACHE_NAME = 'multiplication-table-v1';
+            const urlsToCache = [
+                '/',
+                '/index.html',
+                'icons/icon-72x72.png',
+                'icons/icon-96x96.png',
+                'icons/icon-128x128.png',
+                'icons/icon-144x144.png',
+                'icons/icon-152x152.png',
+                'icons/icon-192x192.png',
+                'icons/icon-384x384.png',
+                'icons/icon-512x512.png'
+            ];
+
+            self.addEventListener('install', event => {
+                event.waitUntil(
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            return cache.addAll(urlsToCache);
+                        })
+                );
+            });
+
+            self.addEventListener('fetch', event => {
+                event.respondWith(
+                    caches.match(event.request)
+                        .then(response => {
+                            return response || fetch(event.request);
+                        })
+                );
+            });
+        `;
+
+        // サービスワーカーをBlobとして登録
+        if ('serviceWorker' in navigator) {
+            const blob = new Blob([serviceWorkerScript], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            
+            navigator.serviceWorker.register(swUrl).then(registration => {
+                console.log('Service Worker registered with scope:', registration.scope);
+            }).catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+        }
+    </script>
+</body>
+</html>
